@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+
+  mongo:
+    image: 'mongo:latest'
+    ports:
+      - 27017:27017
+    network_mode: "host"
+
+  gunicorn:
+    build: .
+    command: gunicorn -b 0.0.0.0:8010 --access-logfile - --reload "long_term_data_persistence_receiver:app"
+    environment:
+      PYTHONUNBUFFERED: 'true'
+    ports:
+      - '8010:8010'
+    expose:
+      - "8010"
+    network_mode: "host"
+

@@ -1,0 +1,19 @@
+url: "https://iot.alticelabs.com/api"
+
+service_url: "0.0.0.0:80"
+
+prefix_point_of_contact: "/subscriptions"
+postfix_point_of_contact: "/push_data"
+
+database:
+  host: "localhost"
+  dbname: "subscriptionsdb"
+  user: "smReceiver"
+  password: "ReceiverPass"
+
+period: 30
+
+receivers:
+  - "http://localhost:8010/push_data"
+  - "http://localhost:8000/newValue"
+  - "http://localhost:8004/push_data"

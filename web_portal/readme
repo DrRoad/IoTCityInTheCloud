@@ -1,0 +1,3 @@
+open iot_city_web_portal and run:
+# ng build
+# ng serve

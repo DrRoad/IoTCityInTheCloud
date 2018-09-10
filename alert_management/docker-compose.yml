@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+
+  PostgreSQL_alerts:
+    restart: always
+    image: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - /srv/docker/postgresql:/var/lib/postgresql
+      - ./CreateDB.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres_init_script.sh:/docker-entrypoint-initdb.d/init2.sh
+  
+  gunicorn:
+    build: .
+    command: gunicorn -b 0.0.0.0:8004 --access-logfile - --reload "alert_management:app"
+    environment:
+      PYTHONUNBUFFERED: 'true'
+    ports:
+      - '8004:8004'
+    expose:
+      - "8004"
+    network_mode: "host"

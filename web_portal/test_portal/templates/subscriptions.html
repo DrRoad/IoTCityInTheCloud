@@ -1,0 +1,220 @@
+<html>
+	<head>
+		<title>IoT City Test Portal</title>
+		<link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+		<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+		<script src="https://code.highcharts.com/stock/highstock.js"></script>
+		<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+
+		<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+		<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+		<script src="{{ url_for("static", filename="ws.js") }}"></script>
+		
+		<link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic' rel='stylesheet' type='text/css'>
+		<link href='{{ url_for("static", filename="style.css") }}' rel='stylesheet' type='text/css'>
+	</head>
+	<body>
+		<script type="text/javascript">
+            var service_url="http://localhost:8000/authenticated";
+            var token=localStorage.getItem('access_token');
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    if (xhr.status != 200) {
+                        window.location.replace("/login");
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            xhr.open("GET", service_url, true);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            xhr.send();
+        </script>
+
+		<div class="sidenav">
+			<a href="/">Home</a>
+			<a href="/verticals">Verticals</a>
+			<a href="/devices">Devices</a>
+			<a href="/subscriptions">Subscriptions</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/triggered">Triggered</a>
+		</div>
+
+		<div body style="margin-left: 200px;">
+			<table id="subscriptions">
+				<td>ID</td>
+				<td>Name</td>
+				<td>Device Subscriber</td>
+				<td>Device ID</td>
+				<td>Device Secret</td>
+				<td>Stream Name</td>
+				<td>Description</td>
+				<td>State</td>
+				<td>Method</td>
+				<td>Delete</td>
+			</table>
+
+			<button id="subscribe-stream">Subscribe stream</button>
+		
+			<div id="dialog-form" title="Subscribe stream">
+		 
+			  <form>
+				<fieldset>
+
+				  <label for="name">Name</label>
+				  <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
+				  
+				  <label for="device_subscriber">Device Subscriber</label>
+				  <input type="text" name="device_subscriber" id="device_subscriber" value="" class="text ui-widget-content ui-corner-all">
+				  
+				  <label for="device_id">Device ID</label>
+				  <input type="text" name="device_id" id="device_id" value="" class="text ui-widget-content ui-corner-all">
+				  
+				  <label for="device_secret">Device Secret</label>
+				  <input type="text" name="device_secret" id="device_secret" value="" class="text ui-widget-content ui-corner-all">
+
+				  <label for="stream_name">Stream Name</label>
+				  <input type="text" name="stream_name" id="stream_name" value="" class="text ui-widget-content ui-corner-all">
+				  
+				  <label for="description">Description</label>
+				  <input type="text" name="description" id="description" value="" class="text ui-widget-content ui-corner-all">
+
+				  <label for="state">State</label>
+				  <input type="text" name="state" id="state" value="" class="text ui-widget-content ui-corner-all">
+
+				  <label for="method">Method</label>
+				  <input type="text" name="method" id="method" value="" class="text ui-widget-content ui-corner-all">
+			 
+				  <!-- Allow form submission with keyboard without duplicating the dialog button -->
+				  <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+				</fieldset>
+			  </form>
+			</div>
+			
+		</div>
+
+		<script type="text/javascript">
+
+			$( function() {
+				var dialog, form,
+			 
+				name = $( "#name" ),
+				device_subscriber = $( "#device_subscriber" ),
+				device_id = $( "#device_id" ),
+				device_secret = $( "#device_secret" ),
+				stream_name = $( "#stream_name" ),
+				state = $( "#state" ),
+				method = $( "#method" ),
+				description = $ ( "#description" );
+			
+			
+				function subscribeStream() {
+
+					var xhr = new XMLHttpRequest();
+					data = {"name": document.getElementById("name").value, "subscriber_id": document.getElementById("device_subscriber").value, "device_id": document.getElementById("device_id").value, "device_secret": document.getElementById("device_secret").value, "stream_name": document.getElementById("stream_name").value, "state": document.getElementById("state").value, "method": document.getElementById("method").value, "description": document.getElementById("description").value};
+					xhr.open("POST", service_url+"/subscriptions", true);
+					xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+					xhr.setRequestHeader('ACCOUNT-ID', 'ua1');
+					xhr.setRequestHeader('ACCOUNT-SECRET', '8ik8fm0h8mqer821agae3qg29ve1kl84d9b0svsiesqj52lil59g');
+					xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('access_token'));
+					xhr.send(JSON.stringify(data));
+					xhr.onloadend = function () {
+						window.location.reload();
+					};
+
+				}
+			 
+				dialog = $( "#dialog-form" ).dialog({
+					autoOpen: false,
+					height: 400,
+					width: 350,
+					modal: true,
+					buttons: {
+						"Subscribe Stream": subscribeStream,
+						Cancel: function() {
+							dialog.dialog( "close" );
+						}
+					},
+					close: function() {
+					form[ 0 ].reset();
+				 	}
+				});
+			 
+				form = dialog.find( "form" ).on( "submit", function( event ) {
+					event.preventDefault();
+					addDevice();
+				});
+			 
+				$( "#subscribe-stream" ).button().on( "click", function() {
+					dialog.dialog( "open" );
+				});
+			});
+
+			var service_url="http://localhost:8000";
+			var url = service_url+'/subscriptions';
+			$.ajax({ url: url,
+				headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')},
+				success: function(data) {
+					values = data["values"];
+
+					for(value in values){
+						var table = document.getElementById("subscriptions");
+						var row = table.insertRow(-1);
+						var cell1 = row.insertCell(0);
+						var cell2 = row.insertCell(1);
+						var cell3 = row.insertCell(2);
+						var cell4 = row.insertCell(3);
+						var cell5 = row.insertCell(4);
+						var cell6 = row.insertCell(5);
+						var cell7 = row.insertCell(6);
+						var cell8 = row.insertCell(7);
+						var cell9 = row.insertCell(8);
+						var cell10 = row.insertCell(9);
+						
+						var button = document.createElement("button");
+						(function(id){
+							button.addEventListener('click', function(){ deleteSubscription(id); }, true);
+						})(values[value]["id"]);
+						button.innerHTML = "Delete";
+
+						
+						cell1.innerHTML = "<a href=/subscription/"+ values[value]["id"]+">"+values[value]["id"]+"</a>";
+						cell2.innerHTML = values[value]["name"];
+						cell3.innerHTML = values[value]["subscriber_id"];
+						cell4.innerHTML = values[value]["device_id"];
+						cell5.innerHTML = values[value]["device_secret"];
+						cell6.innerHTML = values[value]["stream_name"];
+						cell7.innerHTML = values[value]["description"];
+						cell8.innerHTML = values[value]["state"];
+						cell9.innerHTML = values[value]["method"];
+						cell10.appendChild(button);
+					}
+				},
+				error: function(XMLHttpRequest, textStatus, errorThrown) {
+
+				}
+			});
+
+			
+
+			function deleteSubscription(id){
+				var xhr = new XMLHttpRequest();
+                xhr.open("DELETE", service_url+"/subscriptions/"+id, true);
+                xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                xhr.setRequestHeader('ACCOUNT-ID', 'ua1');
+				xhr.setRequestHeader('ACCOUNT-SECRET', '8ik8fm0h8mqer821agae3qg29ve1kl84d9b0svsiesqj52lil59g');
+				xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('access_token'));
+                xhr.send();
+                xhr.onloadend = function () {
+                    location.reload();
+                };
+			}
+		</script>
+	</body>
+</html>
+

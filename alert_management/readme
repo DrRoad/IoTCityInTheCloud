@@ -1,0 +1,19 @@
+# First, you must install docker and docker-compose:
+# Then, on this folder, run:
+sudo docker-compose up
+# All services should be running
+# To stop, do:
+sudo docker-compose down
+
+# To rebuild the instalation, run:
+sudo docker-compose build
+
+Endpoints:
+
+localhost:80/push_data:
+
+The body of the post request should be in JSON format, and it should contain two fields: topic and value.
+
+The value will be pushed to the prometheus database.
+
+The alerts and the receivers can be configured on the respective configuration files, on the prometheus_configs file.

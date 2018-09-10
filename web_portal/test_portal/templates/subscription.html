@@ -1,0 +1,242 @@
+<html>
+    <head>
+        <title>IoT City Test Portal</title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <script src="https://code.highcharts.com/stock/highstock.js"></script>
+        <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+        
+        <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic' rel='stylesheet' type='text/css'>
+        <link href='{{ url_for("static", filename="style.css") }}' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var service_url="http://localhost:8000/authenticated";
+            var token=localStorage.getItem('access_token');
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    if (xhr.status != 200) {
+                        window.location.replace("/login");
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            xhr.open("GET", service_url, true);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            xhr.send();
+        </script>
+        
+        <div id='frame'>
+			<div id='updated'>UPDATED</div>
+            <div id='value'    class='data'></div>
+            <div id="container" style="height: 400px; min-width: 310px"></div>
+        </div>
+
+        <div class="sidenav">
+            <a href="/">Home</a>
+            <a href="/verticals">Verticals</a>
+            <a href="/devices">Devices</a>
+            <a href="/subscriptions">Subscriptions</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/triggered">Triggered</a>
+
+        </div>
+
+        <script>
+            var chart = null;
+            var service_url="http://localhost:8000";
+            Highcharts.setOptions({
+                global: {
+                    useUTC: false
+                }
+            });
+
+            /*$.getJSON(service_url+"/subscriptions/{{ subscription_id }}/values", function (data) {
+                    values = data["Values"];
+
+                    data = [];
+                    for(value in values){
+                        var event = new Date(values[value]["createdAt"]);
+                        data.push([event.getTime(), parseFloat(values[value]["data"])]);
+                    }
+
+                    // Create the chart
+                    chart = Highcharts.stockChart('container', {
+                        chart: {
+                            events: {
+                                
+                            }
+                        },
+
+                        rangeSelector: {
+                            buttons: [{
+                                count: 1,
+                                type: 'minute',
+                                text: '1M'
+                            }, {
+                                count: 5,
+                                type: 'minute',
+                                text: '5M'
+                            }, {
+                                type: 'all',
+                                text: 'All'
+                            }],
+                            inputEnabled: false,
+                            selected: 0
+                        },
+
+                        title: {
+                            text: 'Subscription data'
+                        },
+
+                        exporting: {
+                            enabled: false
+                        },
+
+                        series: [{
+                            data: data
+                        }]
+                    });
+
+            });*/
+            var url = service_url+"/subscriptions/{{ subscription_id }}/values";
+            $.ajax({ url: url,
+                headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')},
+                success: function(data) {
+                    values = data["Values"];
+
+                    data = [];
+                    for(value in values){
+                        var event = new Date(values[value]["createdAt"]);
+                        data.push([event.getTime(), parseFloat(values[value]["data"])]);
+                    }
+
+                    // Create the chart
+                    chart = Highcharts.stockChart('container', {
+                        chart: {
+                            events: {
+                                
+                            }
+                        },
+
+                        rangeSelector: {
+                            buttons: [{
+                                count: 1,
+                                type: 'minute',
+                                text: '1M'
+                            }, {
+                                count: 5,
+                                type: 'minute',
+                                text: '5M'
+                            }, {
+                                type: 'all',
+                                text: 'All'
+                            }],
+                            inputEnabled: false,
+                            selected: 0
+                        },
+
+                        title: {
+                            text: 'Subscription data'
+                        },
+
+                        exporting: {
+                            enabled: false
+                        },
+
+                        series: [{
+                            data: data
+                        }]
+                    });
+                }
+            });
+
+            var ws;                 // WebSocket
+            var prev_data;          // remember data fetched last time
+            var ws_url = "ws://localhost:8000/updated"
+
+            /**
+             *  Establish a WebSocket if possible.
+             */
+            function establish_websocket() {
+                if ("WebSocket" in window) {
+                    ws = new WebSocket(ws_url);
+                    ws.onstart = function() {
+                        ws.send('started');
+                        console.log('Started');
+                    }
+                    ws.onmessage = function (msg) {
+                        console.log('load');
+                        var reader = new FileReader();
+                        reader.onload = function() {
+                            var res = reader.result;
+                            console.log(res);
+                            if(!isNaN(res)){
+                                display_data(parseFloat(res));
+                            }
+                            
+                        }
+                        reader.readAsText(msg.data);
+                    };
+                    ws.onclose = function (msg) {
+                        console.log('close');
+                        $("#updated").html('SERVER DISCONNECT');
+                        $("#updated").css('backgroundColor', '#FFCCFF');
+                        $("#updated").fadeIn('fast');
+                    };
+                } else {
+                    alert("WebSocket not supported");
+                }
+            }
+
+            /**
+             *  Show the data acquired by load_data()
+             */
+            function display_data(data) {
+                if (data && (data != prev_data)) {      // if data and it's changed
+
+                    // compute a message to display comparing current data with previous data
+                    var msg;
+                    var delta_msg;
+                    if (prev_data) {
+                        console.log("data.value:", data, "prev_data.value:", prev_data);
+                    }
+                    else {
+                        console.log("data.value:", data, "no prev_data");
+                    }
+                    msg = "<b>" + data + '</b>';
+                    
+                    if (chart != null){
+                        chart.series[0].addPoint([new Date().getTime(), data], true, true);
+                    }
+
+                    // update the contents of several HTML divs via jQuery
+                    $('div#value').html(msg);
+
+                    // remember this data, in case want to compare it to next update
+                    prev_data = data;
+
+                    // a little UI sparkle - show the #updated div, then after a little
+                    // while, fade it away
+                    $("#updated").fadeIn('fast');
+                    setTimeout(function() {  $("#updated").fadeOut('slow');  }, 2500);
+                }
+            }
+
+            /**
+             *  Inital document setup - hide the #updated message, and provide a
+             *  "loading..." message
+             */
+            $(document).ready(function() {
+                $("div#updated").fadeOut(0);
+            });
+
+            establish_websocket();
+
+        </script>
+    </body>
+</html>
+

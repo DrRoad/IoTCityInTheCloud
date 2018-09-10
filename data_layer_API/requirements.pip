@@ -1,0 +1,6 @@
+celery==4.1.0
+requests==2.9.1
+ruamel.yaml==0.15.35
+psycopg2==2.7.3.2
+gunicorn==19.7.1
+falcon==1.4.1

@@ -1,0 +1,179 @@
+<html>
+    <head>
+        <title>IoT City Test Portal</title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <script src="https://code.highcharts.com/stock/highstock.js"></script>
+        <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+
+        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+        <script src="{{ url_for("static", filename="ws.js") }}"></script>
+        
+        <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic' rel='stylesheet' type='text/css'>
+        <link href='{{ url_for("static", filename="style.css") }}' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var service_url="http://localhost:8000/authenticated";
+            var token=localStorage.getItem('access_token');
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    if (xhr.status != 200) {
+                        window.location.replace("/login");
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            xhr.open("GET", service_url, true);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            xhr.send();
+        </script>
+
+        <div class="sidenav">
+            <a href="/">Home</a>
+            <a href="/verticals">Verticals</a>
+            <a href="/devices">Devices</a>
+            <a href="/subscriptions">Subscriptions</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/triggered">Triggered</a>
+        </div>
+
+        <div body style="margin-left: 200px;">
+
+            <table id="actuators">
+                <tr>
+                    <td>ID</td>
+                    <td>Account ID</td>
+                    <td>Account Secret</td>
+                    <td>Value</td>
+                    <td>Device Id</td>
+                    <td>Stream Name</td>
+                    <td>Delete</td>
+                </tr>
+            </table>
+
+            <button id="create-actuator">Create new actuator</button>
+        </div>
+
+        <div id="dialog-form" title="Add Actuator">
+         
+          <form>
+            <fieldset>
+              <label for="device_id">Device ID</label>
+              <input type="text" name="device_id" id="device_id" value="" class="text ui-widget-content ui-corner-all"/><br>
+
+              <label for="stream_name">Stream Name</label><br>
+              <input type="text" name="stream_name" id="stream_name" value="" class="text ui-widget-content ui-corner-all"><br>
+         
+              <label for="value">Value</label><br>
+              <input type="text" name="value" id="value" value="" class="text ui-widget-content ui-corner-all"><br>
+
+              <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+            </fieldset>
+          </form>
+        </div>
+
+        <script type="text/javascript">
+            var service_url="http://localhost:8000"
+            var url = service_url+'/alert/{{ alert_id }}/actuators';
+            $.ajax({ url: url,
+                headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')},
+                success: function(data) {
+                    values = data;
+                    var table = document.getElementById("actuators");
+                    for(value in values){
+                        element = values[value];
+                        
+                        var row = table.insertRow(-1);
+                        var cell1 = row.insertCell(0);
+                        var cell2 = row.insertCell(1);
+                        var cell3 = row.insertCell(2);
+                        var cell4 = row.insertCell(3);
+                        var cell5 = row.insertCell(4);
+                        var cell6 = row.insertCell(5);
+                        var cell7 = row.insertCell(6);
+
+                        var button = document.createElement("button");
+                        (function(id){
+                            button.addEventListener('click', function(){ deleteActuator(id); }, true);
+                        })(element["id"]);
+                        button.innerHTML = "Delete";
+
+                        cell1.innerHTML = element["id"];
+                        cell2.innerHTML = element["account_id"];
+                        cell3.innerHTML = element["account_secret"];
+                        cell4.innerHTML = element["value"];
+                        cell5.innerHTML = element["device_id"];
+                        cell6.innerHTML = element["stream_name"];
+                        cell7.appendChild(button);
+                    }
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                }
+            });
+
+            function deleteActuator(id){
+                var xhr = new XMLHttpRequest();
+                xhr.open("DELETE", service_url+"/alert/{{ alert_id }}/"+id, true);
+                xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('access_token'));
+                xhr.send();
+                xhr.onloadend = function () {
+                    location.reload();
+                };
+            }
+
+            $( function() {
+                var dialog, form;
+                
+                function addActuator() {
+                    var xhr = new XMLHttpRequest();
+                    data = {"deviceId": document.getElementById("device_id").value, "streamName": document.getElementById("stream_name").value, "value": document.getElementById("value").value};
+                    xhr.open("POST", service_url+"/alert/{{ alert_id }}/actuator", true);
+                    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                    xhr.setRequestHeader('ACCOUNT-ID', 'ua1');
+                    xhr.setRequestHeader('ACCOUNT-SECRET', '8ik8fm0h8mqer821agae3qg29ve1kl84d9b0svsiesqj52lil59g');
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('access_token'));
+                    xhr.send(JSON.stringify(data));
+                    xhr.onloadend = function () {
+                        window.location.reload();
+                    };
+                }
+            
+                dialog = $( "#dialog-form" ).dialog({
+                    autoOpen: false,
+                    height: 400,
+                    width: 350,
+                    modal: true,
+                    buttons: {
+                        "Add Actuator": addActuator,
+                        Cancel: function() {
+                            dialog.dialog( "close" );
+                        }
+                    },
+                    close: function() {
+                    form[ 0 ].reset();
+                    }
+                });
+             
+                form = dialog.find( "form" ).on( "submit", function( event ) {
+                    event.preventDefault();
+                    addActuator();
+                });
+             
+                $( "#create-actuator" ).button().on( "click", function() {
+                    dialog.dialog("open");
+                });
+            });
+        </script>
+
+    </body>
+</html>
+

@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+
+  rabbit:
+    image: "rabbitmq:3"
+    restart: always
+    hostname: "rabbit"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+      RABBITMQ_DEFAULT_USER: "rabbitmq"
+      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    network_mode: "host"
+
+  PostgreSQL:
+    restart: always
+    image: postgres
+    hostname: "PostgreSQL"
+    ports:
+      - 5432:5432
+    expose:
+      - "5432"
+    environment:
+      - DEBUG=false
+    volumes:
+      - /srv/docker/postgresql:/var/lib/postgresql
+      - ./CreateDB.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres_init_script.sh:/docker-entrypoint-initdb.d/init2.sh
+    network_mode: "host"
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery worker --app=tasks --loglevel=INFO
+    volumes:
+        - .:/app
+    network_mode: "host"
+
+  gunicorn:
+    build: .
+    command: gunicorn -b 0.0.0.0:8002 --access-logfile - --reload "endpoints:app"
+    environment:
+      PYTHONUNBUFFERED: 'true'
+    ports:
+      - '8002:8002'
+    expose:
+      - "8002"
+    network_mode: "host"
+
+  fetcher:
+    build: .
+    command: python3 data_fetcher.py configurations.yml
+    environment:
+      PYTHONUNBUFFERED: 'true'
+    ports:
+      - '8001:8000'
+    network_mode: "host"
+  

@@ -1,0 +1,19 @@
+#Configure new gateways here
+# newType:
+360waste:
+    #organization1:
+    #api: https://manager.360waste.pt/manager/getallsensors?wsuid=4f5fd78616784e36f31cf275cfc5e6f4a17072cdd600e9a00d03bb3890c1e0e8763d67b233dc9d3b5717d6b01207068517153f79d542b4dc3389a0bf11ce4cds&wsid=MxBp2lZMApZJFux
+    #devices:
+    #  1:
+    #    api_id: 37
+    #    device_id: 9dde1164-f09f-4649-b56b-f50ec5f64f1f
+    #    pw: hcd64klmsolagef36tsc4eobsk74riep38coq0em7qto4hk0c0ab
+    #    wasteperc_stream: newStream
+    #    intemp_stream: wastetemperature
+    #  2:
+    #    api_id: 325
+    #    device_id: dev2
+    #    pw: 111
+    #    wasteperc_stream: ert
+    #    intemp_stream: dgf
+    #period: 30

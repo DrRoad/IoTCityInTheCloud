@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+
+  accountspostgresql:
+    restart: always
+    image: postgres
+    hostname: "accountspostgre"
+    volumes:
+      - /srv/docker/postgresql:/var/lib/postgresql
+      - ./postgres_init_script.sh:/docker-entrypoint-initdb.d/init2.sh
+    environment:
+      POSTGRES_USER: accounts
+      POSTGRES_PASSWORD: accountspw
+      POSTGRES_DB: accountsdb
+      PGPORT: 5434
+    ports:
+      - "5434:5432"
+    network_mode: "host"
+
+  PostgreSQL_serviceLayer:
+    restart: always
+    image: postgres
+    hostname: "PostgreSQL_serviceLayer"
+    ports:
+      - "5433:5432"
+    volumes:
+      - /srv/docker/postgresql:/var/lib/postgresql
+      - ./CreateDB.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres_init_script.sh:/docker-entrypoint-initdb.d/init2.sh
+
+  gunicorn:
+    build: .
+    command: gunicorn -b 0.0.0.0:8000 -k flask_sockets.worker wsgi
+    environment:
+      PYTHONUNBUFFERED: 'true'
+    ports:
+      - '8000:8000'
+    expose:
+      - "8000"
+    network_mode: "host"
+  

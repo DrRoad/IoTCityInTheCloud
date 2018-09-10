@@ -1,0 +1,72 @@
+# First, you must install docker and docker-compose:
+# Then, on this folder, run:
+sudo docker-compose up
+# All services should be running
+# To stop, do:
+sudo docker-compose down
+
+# To rebuild the instalation, run:
+sudo docker-compose build
+
+
+Endpoints:
+
+localhost:80/receiver:
+
+Accepts anything on the body of a post request.
+It will forward the request to all the receivers configured in the configurations.yml file.
+
+
+localhost:80/subscriber:
+
+It will subscribe a stream of SmartIoT, and it will fetch the data automatically and send it to the receivers configured in the configurations.yml file.
+
+
+The body of the post request should be in JSON format, and it should respect the following format:
+
+	Mandatory arguments:
+	account_username - Username to create the subscription
+	account_password - Password of the acoount to create the subscription
+	subscription_name - Name of the subscription
+	subscriber_id  - The ID of the device that is interested in the data
+	stream_name - Name of the stream to subscribe
+	device_id - ID of the device that owns the stream
+
+
+	Optional arguments:
+	description - Description of the subscription.
+	state - State of the stream (active|suspended) Default: active.
+	point_of_contact - Point of contact if the client wants to fetch the data from 
+	retention_count - Quantity of records to keep in the associated subscription before discarding the old records not consumed or delivered. (default: currently is unlimited)
+	retention_time - Maximum amount of time to keep data in the associated subscription before discarding oold records not consumed or delivered. (default: currently is unlimited
+	retries - Number of delivery retries (default = 5)
+	retry_policy - Interval between delivery attempts. (ex. If retry policy is "30,45,60" and first attempt fails, then SmartIoT will try
+	a second delivery after 30 seconds. Next retry (third), will occur after 45 seconds. Subsequent retries will happen is 60
+	seconds intervals utils the rettries value is reached. By default the retry policy is "30,45,60" seconds. Retry policy should be
+	specified in the format " (number)(,number)* ". If you specify an invalid retry policy, the a status code 400 will be returned. Default: "30, 45, 60"
+
+
+
+On the file configurations.yml are the configurations for the microservice:
+
+url - url of the broker to fetch data
+
+database:
+  host - ip or host name of database
+  dbname - name of database
+  user -  username of database
+  password - password of database
+
+
+device:
+  id -  ID of the device used to fetch data from the broker
+  password - Password of the device used to fetch data from the broker
+
+period - period, in seconds, to fetch data from the broker
+
+receivers - list of receivers of data
+
+
+Other notes:
+- The postgresSQL database will configure himself on the first run
+- All the requirements should install themselfs automatically on the first run

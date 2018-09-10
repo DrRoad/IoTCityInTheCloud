@@ -1,0 +1,106 @@
+<html>
+    <head>
+        <title>IoT City Test Portal</title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+        <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+        <script src="https://code.highcharts.com/stock/highstock.js"></script>
+        <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+
+        <script src="{{ url_for("static", filename="ws.js") }}"></script>
+        
+        <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700,400italic' rel='stylesheet' type='text/css'>
+        <link href='{{ url_for("static", filename="style.css") }}' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var service_url="http://localhost:8000/authenticated";
+            var token=localStorage.getItem('access_token');
+
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4) {
+                    if (xhr.status != 200) {
+                        window.location.replace("/login");
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            xhr.open("GET", service_url, true);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+            xhr.send();
+        </script>
+
+        <div class="sidenav">
+            <a href="/">Home</a>
+            <a href="/verticals">Verticals</a>
+            <a href="/devices">Devices</a>
+            <a href="/subscriptions">Subscriptions</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/triggered">Triggered</a>
+        </div>
+
+        <div body style="margin-left: 200px;">
+            <ul id="verticals">
+
+        </ul>
+
+        <button onclick="addVertical();">Add vertical</button>
+        </div>
+        
+        
+        <script type="text/javascript">
+            var service_url="http://localhost:8000"
+            var url = service_url+'/verticals';
+            $.ajax({ url: url,
+                headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')},
+                success: function(data) {
+                    values = data["values"];
+                    var ul = document.getElementById("verticals");
+                    for(value in values){
+                        var li = document.createElement("li");
+                        var button = document.createElement("button");
+                        (function(values, value){
+                            button.addEventListener('click', function(){deleteVertical(values[value]); }, true);
+                        })(values, value);
+                        button.innerHTML = "Delete";
+                        li.appendChild(document.createTextNode(values[value]));
+                        li.appendChild(button);
+                        ul.appendChild(li);
+                    }
+                },
+                error: function(XMLHttpRequest, textStatus, errorThrown) {
+                }
+            });
+
+            function deleteVertical(name){
+                var xhr = new XMLHttpRequest();
+                xhr.open("DELETE", service_url+"/verticals/"+name, true);
+                xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('access_token'));
+                xhr.send();
+                xhr.onloadend = function () {
+                    location.reload();
+                };
+            }
+
+            function addVertical(){
+                var x;
+                var name=prompt("Please enter the vertical name");
+                if (name!=null){
+                    var xhr = new XMLHttpRequest();
+                    data = {"name": name};
+                    xhr.open("POST", service_url+"/verticals", true);
+                    xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('access_token'));
+                    xhr.send(JSON.stringify(data));
+                    xhr.onloadend = function () {
+                        location.reload();
+                    };
+               }
+            }
+
+        </script>
+    </body>
+</html>
+

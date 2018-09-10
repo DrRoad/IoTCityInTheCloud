@@ -1,0 +1,52 @@
+# First, you must install docker and docker-compose:
+# Then, on this folder, run:
+sudo docker-compose up
+# All services should be running
+# To stop, do:
+sudo docker-compose down
+
+# To rebuild the instalation, run:
+sudo docker-compose build
+
+### Accounts ###
+
+# Endpoints
+
+/login
+
+/logout
+
+/token
+
+/authenticated
+
+/permissions/<string:action>
+
+/organizations
+
+/users
+
+/organizations/<int:id>
+
+/users/<int:id>
+
+
+
+On the flask application there are the configurations for the microservice:
+
+POSTGRES_USER - database username
+POSTGRES_PW - database password
+POSTGRES_DB - database name
+POSTGRES_URL - url to fetch data from the database
+DB_URL - final url to connection
+
+
+Other notes:
+- The postgresSQL database will be launched and will be configured by the flask app before the first request
+- All the requirements should install themselfs automatically on the first run
+
+###
+It is possible to expose some functions that are implemented internally like:
+- Create/delete roles
+- Create/delete actions
+- Create/delete permissions
